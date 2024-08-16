@@ -10,12 +10,15 @@ const uploadedText: { original: Array<string>, rows: Array<Array<string>>, el: A
 const DetailedAppContainer = () => {
   const [mouseIn, setMouseIn] = useState(false)
   const [times, setTimes] = useState(0)
+  const [lag, setLag] = useState(500)
   const [formatter, setFormatter] = useState<{ placeholder: Array<string>, fileNames: Array<string>, rowsCount: Array<number> }>({ placeholder: [], fileNames: [], rowsCount: [] })
   const [submitFinished, setSubmitFinished] = useState({
     total: 0,
-    finished:0
+    finished: 0
   })
   const findPlaceholder = () => {
+    setTimes(0)
+    setSubmitFinished({ ...submitFinished, total: 0, finished: 0 })
     const textArea = document.querySelectorAll(".comfy-multiline-input")
 
     const res: Array<string> = []
@@ -58,15 +61,15 @@ const DetailedAppContainer = () => {
           const text = result.trim()
 
           const rows = text.split("\n")
-          const removeEmptyRows=[]
+          const removeEmptyRows = []
           for (let i = 0; i < rows.length; i++) {
             rows[i] = rows[i].replace("\n", "")
             rows[i] = rows[i].replace("\r", "")
-            if(rows[i]==="") removeEmptyRows.push(i)
+            if (rows[i] === "") removeEmptyRows.push(i)
           }
-          if(removeEmptyRows.length>0){
-            for(let i = 0; i < removeEmptyRows.length; i++) rows.splice(removeEmptyRows[i]-i,1)
-        }
+          if (removeEmptyRows.length > 0) {
+            for (let i = 0; i < removeEmptyRows.length; i++) rows.splice(removeEmptyRows[i] - i, 1)
+          }
 
           uploadedText.rows[index] = rows
           const newFileNames = clone(formatter['fileNames'])
@@ -91,43 +94,47 @@ const DetailedAppContainer = () => {
   const submit = async () => {
     const promptButton: HTMLButtonElement | null = document.querySelector("#queue-button")
     if (!promptButton) return;
-    
+    //@ts-ignore
+    promptButton.style="opacity:0.1;cursor:wait"
     const areaOriginalText = uploadedText.el.map((el) => el.value)
-    setSubmitFinished({...submitFinished, total:times})
+    setSubmitFinished({ ...submitFinished, total: times })
     for (let i = 0; i < times; i++) {
-      for(let j =0;j<uploadedText.el.length;j++){
+      for (let j = 0; j < uploadedText.el.length; j++) {
         const el = uploadedText.el[j]
-        if(uploadedText.rows[j].length===0)continue
-        el.value = el.value.replace("{"+formatter['placeholder'][j]+"}", i>=uploadedText.rows[j].length? uploadedText.rows[j][i%uploadedText.rows[j].length]:uploadedText.rows[j][i])
+        if (uploadedText.rows[j].length === 0) continue
+        el.value = el.value.replace("{" + formatter['placeholder'][j] + "}", i >= uploadedText.rows[j].length ? uploadedText.rows[j][i % uploadedText.rows[j].length] : uploadedText.rows[j][i])
       }
       // console.log("times",i)
       // for(const item of uploadedText.el){
       //   console.log(item.value)
       // }
       promptButton.click()
-      await new Promise(resolve => setTimeout(resolve, 500))
-      for(let j=0; j<uploadedText.el.length;j++){
-        uploadedText.el[j].value=areaOriginalText[j]
+      await new Promise(resolve => setTimeout(resolve, lag))
+      for (let j = 0; j < uploadedText.el.length; j++) {
+        uploadedText.el[j].value = areaOriginalText[j]
       }
-      setSubmitFinished({finished:i+1, total:times})
-
+      setSubmitFinished({ finished: i + 1, total: times })
     }
+    //@ts-ignore
+    promptButton.style="opacity:1; cursor:pointer"
   }
   return (<div style={{ backgroundColor: 'rgba(0,0,0,0.5)', minHeight: "100px", maxHeight: "40vh", overflowY: "scroll", width: "300px", border: "1px solid rgb(40,120,80)", padding: "8px", margin: "1px", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", opacity: mouseIn ? "0.8" : "0.2", borderRadius: "2px" }} onMouseEnter={() => setMouseIn(true)} onMouseLeave={() => setMouseIn(false)}>
 
     <div style={{ marginTop: "4px", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%" }}><p> Submit Times:</p>
       <input value={times} onChange={(e) => setTimes(Number(e.target.value))}></input></div>
-
+    <div style={{ marginTop: "1px", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%" }}><p> Lag(ms):</p>
+      <input value={lag} onChange={(e) => setLag(Number(e.target.value))}></input></div>
     <div style={{ margin: "4px", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "80%", }}>
       <button onClick={findPlaceholder} style={{ border: "1px solid rgb(40,120,255)", backgroundColor: "rgb(20,20,40)", color: "white", borderRadius: "2px", cursor: "pointer" }}>Find Placeholder</button>
-      <button style={{ border: "1px solid rgb(40,120,255)", backgroundColor: "rgb(20,20,40)", color: "white", borderRadius: "2px", cursor: "pointer" }} onClick={submit} >Submit!</button>
+      <button style={{ border: "1px solid rgb(255,120,40)", backgroundColor: "rgb(20,20,40)", color: "white", borderRadius: "2px", cursor: "pointer" }} onClick={submit} >Submit!</button>
     </div>
-    {submitFinished.total===0?<></>:<div ><p>{submitFinished.finished}/{submitFinished.total}</p></div>}
-    {formatter.placeholder.map((item, index) => (<div key={item} style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%" }} >
+    {submitFinished.total === 0 ? <></> : <div ><p>{submitFinished.finished}/{submitFinished.total}</p></div>}
+
+    {formatter.placeholder.map((item, index) => (<div key={item} style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%" ,borderBottom:index===formatter.placeholder.length-1?"":"1px solid rgb(40,120,80)"}} >
 
       <p style={{ width: "20%", overflow: "hidden", textOverflow: "ellipsis" }}> {item}</p>
       <button onClick={() => upload(index)} style={{ border: "1px solid rgb(40,120,255)", backgroundColor: "rgb(20,20,40)", color: "white", borderRadius: "2px", cursor: "pointer", marginLeft: "4px" }}>upload</button>
-      
+
       <div style={{ flex: "1", overflow: "hidden", textOverflow: "ellipsis", display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center", marginLeft: "4px" }}>
         <div>rows:{formatter.rowsCount[index]}</div>
         <div style={{ marginLeft: "10px", width: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -165,14 +172,22 @@ const init = () => {
       el.style.left = e.clientX + "px"
 
     }
+    const handleMouseMove = (e: any) => {
+      const el: HTMLElement | null = document.querySelector("#formatter_app")
+      if (!el) return;
+      el.style.top = e.clientY + "px"
+      el.style.left = e.clientX + "px"
+
+    }
+
 
     return (<div >
       <div style={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center" }}>
         <button style={{ backgroundColor: "rgba(0,0,0,0)", padding: "0px", paddingTop: "2px", border: "none", cursor: "move" }} onMouseDown={handleMouseDown}><DragImage></DragImage> </button>
         <button style={{ border: `${show ? '1px solid rgb(40,120,80)' : '1px solid rgb(40,120,255)'}`, backgroundColor: "rgb(20,20,40)", color: "white", borderRadius: "2px", cursor: "pointer" }} onClick={() => setShow(!show)}>{show ? 'Hide' : 'Formatter'}</button></div>
 
-      <div onMouseUp={handleMouseUp} style={{ backgroundColor: 'rgba(0,0,0,0.2)', position: "fixed", top: "0px", left: "0px", width: "100%", height: "100%", display: dragging ? "block" : "none" }}></div>
-      <div style={{ display: show && dragging===false ? "block" : "none" }}><DetailedAppContainer ></DetailedAppContainer></div>
+      <div onMouseUp={handleMouseUp} onMouseMove={handleMouseMove} style={{ backgroundColor: 'rgba(0,0,0,0.2)', position: "fixed", top: "0px", left: "0px", width: "100%", height: "100%", display: dragging ? "block" : "none" }}></div>
+      <div style={{ display: show && dragging === false ? "block" : "none" }}><DetailedAppContainer ></DetailedAppContainer></div>
     </div>)
   }
 
@@ -188,21 +203,21 @@ init()
 
 
 
-chrome.runtime.onMessage.addListener(function (msg:PopoutMessage, sender, sendResponse) {
-   if (msg.type==="Command" && msg.content==="isComfyUI") {
+chrome.runtime.onMessage.addListener(function (msg: PopoutMessage, sender, sendResponse) {
+  if (msg.type === "Command" && msg.content === "isComfyUI") {
     const promptButton: HTMLButtonElement | null = document.querySelector("#queue-button")
     if (!promptButton) {
-      const response:ResponseMessage = {
-        response:false
+      const response: ResponseMessage = {
+        response: false
       }
       sendResponse(response)
       return
     }
-    const response:ResponseMessage = {
-      response:true
+    const response: ResponseMessage = {
+      response: true
     }
     sendResponse(response)
-  } 
+  }
 
 });
 
