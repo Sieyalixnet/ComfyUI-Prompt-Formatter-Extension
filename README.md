@@ -31,9 +31,13 @@ If the `Submit Times` > your rows, it will repeat from the first row. (Please se
 
 All the prompt queued like the image above. You can see that, the `{pos2}` only contains 3 rows but it runs 4 times. So it will repeat from the first row (`char1`).
 
-## Next step
+# config
 
-I am writing custom Lora and Checkpoints nodes that can be modify by text instead of choose the them. So that you can use this extension to replace the placeholders.
+- `Lags(ms)`: If your `Batch count` is not 1, it may cause some promblems because the backend of ComfyUI can not process new requests too often. It may cause the injection does not work. Please edit lags if your `Batch count` larger than 1.
+
+## Text input of Lora Loader and Checkpoint Loader
+
+You can use this extension with <https://github.com/Sieyalixnet/ComfyUI_Textarea_Loaders>, to load the Checkpoint or Lora dynamically.
 
 ## Supplement
 
