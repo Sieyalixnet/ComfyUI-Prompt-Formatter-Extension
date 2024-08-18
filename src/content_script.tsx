@@ -11,6 +11,7 @@ const DetailedAppContainer = () => {
   const [mouseIn, setMouseIn] = useState(false)
   const [times, setTimes] = useState(0)
   const [lag, setLag] = useState(500)
+  const [processing, setProcessing] = useState(false)
   const [formatter, setFormatter] = useState<{ placeholder: Array<string>, fileNames: Array<string>, rowsCount: Array<number> }>({ placeholder: [], fileNames: [], rowsCount: [] })
   const [submitFinished, setSubmitFinished] = useState({
     total: 0,
@@ -94,6 +95,7 @@ const DetailedAppContainer = () => {
   const submit = async () => {
     const promptButton: HTMLButtonElement | null = document.querySelector("#queue-button")
     if (!promptButton) return;
+    setProcessing(true)
     //@ts-ignore
     promptButton.style="opacity:0.1;cursor:wait"
     const areaOriginalText = uploadedText.el.map((el) => el.value)
@@ -117,6 +119,7 @@ const DetailedAppContainer = () => {
     }
     //@ts-ignore
     promptButton.style="opacity:1; cursor:pointer"
+    setProcessing(false)
   }
   return (<div style={{ backgroundColor: 'rgba(0,0,0,0.5)', minHeight: "100px", maxHeight: "40vh", overflowY: "scroll", width: "300px", border: "1px solid rgb(40,120,80)", padding: "8px", margin: "1px", display: "flex", flexDirection: "column", justifyContent: "flex-start", alignItems: "center", opacity: mouseIn ? "0.8" : "0.2", borderRadius: "2px" }} onMouseEnter={() => setMouseIn(true)} onMouseLeave={() => setMouseIn(false)}>
 
@@ -126,7 +129,7 @@ const DetailedAppContainer = () => {
       <input value={lag} onChange={(e) => setLag(Number(e.target.value))}></input></div>
     <div style={{ margin: "4px", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "80%", }}>
       <button onClick={findPlaceholder} style={{ border: "1px solid rgb(40,120,255)", backgroundColor: "rgb(20,20,40)", color: "white", borderRadius: "2px", cursor: "pointer" }}>Find Placeholder</button>
-      <button style={{ border: "1px solid rgb(255,120,40)", backgroundColor: "rgb(20,20,40)", color: "white", borderRadius: "2px", cursor: "pointer" }} onClick={submit} >Submit!</button>
+      <button style={{ border: "1px solid rgb(255,120,40)", backgroundColor: "rgb(20,20,40)", color: "white", borderRadius: "2px", cursor: "pointer" }} onClick={submit} disabled={processing}>Submit!</button>
     </div>
     {submitFinished.total === 0 ? <></> : <div ><p>{submitFinished.finished}/{submitFinished.total}</p></div>}
 
